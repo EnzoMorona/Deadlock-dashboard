@@ -66,6 +66,12 @@ function App() {
   >(null);
   const [itens,setItens] = useState<any[]>([])
   const [itensAleatorios, setItensAleatorios] = useState<any[]>([]);
+  const [quantidadesPorTier, setQuantidadesPorTier] = useState<Record<number, number>>({
+    1: 1,
+    2: 1,
+    3: 4,
+    4: 4,
+  });
 
   useEffect(() => {
     //DANDO LOAD NO PLAYER SELECIONADO PELO MATCHE CODE
@@ -108,7 +114,7 @@ function App() {
 
         console.log("Todos os itens:", itensList);
         setItens(itensList)
-        const sorteados = sortearItens(itensList, 12, { 4: 4, 3: 4, 2: 1, 1: 1 });
+        const sorteados = sortearItens(itensList, 12, quantidadesPorTier);
         setItensAleatorios(sorteados);
         console.log("Itens aleatórios:", sorteados);
 
@@ -218,6 +224,41 @@ function App() {
       </section>
 
       <h1>Player Item Random</h1>
+      {[1, 2, 3, 4].map((tier) => {
+        const totalOutrosTiers = Object.entries(quantidadesPorTier).reduce(//entries pega o tier e quantidade dele
+          (total, [tierAtual, quantidade]) =>
+            total + (Number(tierAtual) === tier ? 0 : quantidade), 0//se a quantidade faz parte do tier atual, adicione 0, caso seja dos outros tiers, adicione a quantidade
+        );//REDUCE funciona como um acumulador, ele vai somando os valores de cada map, o 0 no final representa o valor inicial do total, caso o tier nao seja igual ao tier atual, ele soma a quantidade do tier atual ao total, transformando essa quantidade no novo total
+
+        const maximoDesteTier = 12 - totalOutrosTiers;
+
+        return (
+          <label key={tier}>
+            Tier {tier}{" "}
+            <input
+              type="number"
+              min="0"
+              max={maximoDesteTier}
+              step="1"
+              value={quantidadesPorTier[tier]}
+              onChange={(event) => {
+                const quantidade = Number(event.target.value) || 0;
+
+                if (
+                  Number.isInteger(quantidade) &&
+                  quantidade >= 0 &&
+                  quantidade <= maximoDesteTier
+                ) {
+                  setQuantidadesPorTier((atuais) => ({
+                    ...atuais,
+                    [tier]: quantidade,
+                  }));
+                }
+              }}
+            />
+          </label>
+        );
+      })}
       <section>
         <h2>Itens Aleatórios</h2>
         {itensAleatorios.length === 0 ? (<p>Nenhum item encontrado.</p>) : (//caso a lista de itens aleatórios esteja vazia, exibe uma mensagem itens nao encontrados
@@ -258,7 +299,7 @@ function App() {
           </ul>
         )}
         <button onClick={() => {
-          setItensAleatorios(sortearItens(itens, 12, { 4: 4, 3: 4, 2: 1, 1: 1 }));
+          setItensAleatorios(sortearItens(itens, 12, quantidadesPorTier));
         }}>
           Sortear Novamente
         </button>
